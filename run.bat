@@ -1,7 +1,10 @@
 @echo off
-REM Forge requires a configured set of both JVM and program arguments.
-REM Add custom JVM arguments to the user_jvm_args.txt
-REM Add custom program arguments {such as nogui} to this file in the next line before the %* or
-REM  pass them to this script directly
-java @user_jvm_args.txt @libraries/net/neoforged/neoforge/21.1.228/win_args.txt %*
+REM Better MC x Youer - hybrid server launcher (Windows)
+REM
+REM Youer (MohistMC) is a self-contained NeoForge server that ALSO loads
+REM Bukkit/Spigot/Paper plugins, so there is no separate NeoForge install step -
+REM we just run youer.jar directly.
+REM
+REM JVM arguments (heap size, etc.) live in user_jvm_args.txt
+java @user_jvm_args.txt -jar youer.jar nogui %*
 pause

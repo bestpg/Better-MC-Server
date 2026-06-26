@@ -1,4 +1,10 @@
 ###
+# NOTE (Youer conversion): This server now runs the Youer (MohistMC) hybrid jar
+#   directly (java -jar youer.jar), so the ServerStarterJar / NeoForge auto-install
+#   fields below are NO LONGER used by the launch scripts. RAM and JVM args now live
+#   in user_jvm_args.txt. This file is still read by install_java.sh for the optional
+#   Java 21 install (JDK_VENDOR / RECOMMENDED_JAVA_VERSION / JABBA_*), so it is kept.
+###
 # Remember:
 #   Escape \ and : in your Java path on Windows with another \
 #   Example:

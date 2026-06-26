@@ -1,6 +1,10 @@
 #!/usr/bin/env sh
-# Forge requires a configured set of both JVM and program arguments.
-# Add custom JVM arguments to the user_jvm_args.txt
-# Add custom program arguments {such as nogui} to this file in the next line before the "$@" or
-#  pass them to this script directly
-java @user_jvm_args.txt @libraries/net/neoforged/neoforge/21.1.228/unix_args.txt "$@"
+# Better MC x Youer - hybrid server launcher (Linux/macOS)
+#
+# Youer (MohistMC) is a self-contained NeoForge server that ALSO loads
+# Bukkit/Spigot/Paper plugins, so there is no separate NeoForge install step -
+# we just run youer.jar directly.
+#
+# JVM arguments (heap size, etc.) live in user_jvm_args.txt
+# Extra program args can be passed straight to this script.
+java @user_jvm_args.txt -jar youer.jar nogui "$@"

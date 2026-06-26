@@ -5,3 +5,9 @@ libraries/
 cache/
 defaultconfigs/
 
+# ...but DO track the curated Bukkit/Spigot/Paper plugins - they define the
+# server's plugin set and are hand-picked, not auto-downloaded like the mods.
+# (youer.jar itself stays ignored: re-fetch it from the MohistMC API.)
+!plugins/
+!plugins/*.jar
+
