@@ -11,3 +11,9 @@ defaultconfigs/
 !plugins/
 !plugins/*.jar
 
+
+# Sensitive / user-specific
+server.properties
+server.properties.bak.*
+usercache.json
+usernamecache.json
