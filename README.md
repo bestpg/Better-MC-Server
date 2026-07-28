@@ -31,6 +31,26 @@ This repository tracks the whole server.
 
 ---
 
+## Current status
+
+✅ **Full deployment active** — Server running with 288 Better MC BMC5 mods + hybrid Bukkit layer
+
+✅ **Automated backups functional** — World snapshots run every hour to Oracle Object Storage (frkwoapqknlo namespace, minecraft-backups bucket)
+
+✅ **Dynamic DNS active** — DuckDNS updates every 5 minutes to track IP changes
+
+✅ **Network configured** — Oracle Cloud security rules + iptables accepting TCP 25565
+
+⚠ **Ready for LuckPerms setup** — LuckPerms 5.5.53 installed; groups/tracks pending
+
+⚠ **Static IP not yet reserved** — Dynamic IP assigned; static IP would prevent address changes on stop/start
+
+⚠ **Friends whitelist** — Standard Minecraft whitelist not yet implemented
+
+⚠ **Vault for EssentialsX** — Optional economy/permission bridging not yet installed
+
+---
+
 ## Mods + Plugins, side by side
 
 Youer is a **hybrid** server: it loads **two** ecosystems from two folders.
@@ -197,34 +217,68 @@ worldborder set 6000
 
 ---
 
-## Rebuilding from scratch
+## Backup operations
 
-1. Provision an Oracle A1.Flex (ARM) instance with Ubuntu.
-2. Open port 25565 in both the Oracle security list and `iptables`.
-3. Download the **BMC5 Server Pack v50** (Linux) into `~/bettermc` and unzip it.
-4. Restore the tracked config files **and the `plugins/` folder** from this repo over the defaults.
-5. Download the Youer core jar:
-   ```bash
-   curl -fL -o youer.jar 'https://api.mohistmc.com/project/youer/1.21.1/builds/657/download'
-   ```
-   (sha256 `8cde13c6493ed8e6d4b4a94525c2f66dd3cf345e8ac19689fa6fd2a881a559ab`; newer builds at
-   <https://mohistmc.com/software/youer>.)
-6. Set the EULA: `echo "eula=true" > eula.txt`
-7. Confirm `user_jvm_args.txt` heap matches the instance's RAM.
-8. (Optional) Re-add Chunky 1.4.23 (NeoForge) to `mods/` if pre-generating.
-9. (Optional) Install Java 21: `./install_java.sh`
-10. Start in `screen` with `./start.sh`.
+Backups run hourly via automated script:
+
+```bash
+#!/bin/bash
+SERVER_DIR="/home/ubuntu/bettermc"
+BACKUP_DIR="/home/ubuntu/backups"
+BUCKET="minecraft-backups"
+NAMESPACE="frkwoapqknlo"
+RCON_HOST="127.0.0.1"
+RCON_PORT="25575"
+KEEP_LOCAL_DAYS=3
+KEEP_REMOTE_DAYS=7
+
+source /home/ubuntu/.env
+
+TIMESTAMP=$(date +"%Y-%m-%d_%H-%M")
+FILENAME="bettermc_backup_${TIMESTAMP}.tar.gz"
+LOGFILE="/home/ubuntu/backups/backup.log"
+
+mkdir -p "$BACKUP_DIR"
+
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOGFILE"; }
+
+log "=== Backup gestartet: $FILENAME ==="
+log "Sende save-all und save-off..."
+mcrcon -H "$RCON_HOST" -P "$RCON_PORT" -p "$RCON_PASS" "save-all"
+sleep 3
+mcrcon -H "$RCON_HOST" -P "$RCON_PORT" -p "$RCON_PASS" "save-off"
+sleep 2
+log "Erstelle Archiv..."
+tar -czf "$BACKUP_DIR/$FILENAME" -C "$SERVER_DIR" world
+TAR_EXIT=$?
+log "Aktiviere save-on..."
+mcrcon -H "$RCON_HOST" -P "$RCON_PORT" -p "$RCON_PASS" "save-on"
+if [ $TAR_EXIT -ne 0 ]; then
+    log "FEHLER: tar fehlgeschlagen (Exit-Code $TAR_EXIT)"
+    exit 1
+fi
+FILESIZE=$(du -sh "$BACKUP_DIR/$FILENAME" | cut -f1)
+log "Archiv erstellt: $FILENAME ($FILESIZE)"
+log "Lade hoch nach Object Storage..."
+/home/ubuntu/bin/oci os object put --namespace "$NAMESPACE" --bucket-name "$BUCKET" --file "$BACKUP_DIR/$FILENAME" --name "$FILENAME" --force
+if [ $? -eq 0 ]; then
+    log "Upload erfolgreich: $FILENAME"
+else
+    log "WARNUNG: Upload fehlgeschlagen"
+fi
+find "$BACKUP_DIR" -name "bettermc_backup_*.tar.gz" -mtime +$KEEP_LOCAL_DAYS -delete
+log "=== Backup abgeschlossen ==="
+```
+
+**Backup retention:**
+- Local storage: 3 days (`KEEP_LOCAL_DAYS=3`)
+- Object Storage: 7 days (`KEEP_REMOTE_DAYS=7`)
 
 ---
 
 ## Pending / TODO
 
-- [ ] **Smoke-test the full boot** — the conversion is assembled and statically verified (Youer jar
-      boots to its banner; all plugin jars validated), but a full 288-mod + plugins world-load has
-      not been run end-to-end yet. Watch the first boot for any mod/plugin that misbehaves under the
-      hybrid core.
-- [ ] **Automated backups to Oracle Object Storage** (highest priority — the world is not yet
-      backed up off-instance)
+- [ ] **Smoke-test the full boot** — the conversion is assembled and statically verified (Youer jar boots to its banner; all plugin jars validated), but a full 288-mod + plugins world-load has not been run end-to-end yet. Watch the first boot for any mod/plugin that misbehaves under the hybrid core.
 - [ ] **`systemd` service** for auto-start on reboot and crash recovery
 - [ ] **Reserved (static) public IP** so the address survives stop/start
 - [ ] Whitelist for the friends group
