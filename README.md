@@ -41,54 +41,17 @@ This repository tracks the whole server.
 
 ✅ **Network configured** — Oracle Cloud security rules + iptables accepting TCP 25565
 
-⚠ **Ready for LuckPerms setup** — LuckPerms 5.5.53 installed; groups/tracks pending
+✅ **Full boot smoke-tested** — 288-mod + plugins world-load verified end-to-end
 
-⚠ **Static IP not yet reserved** — Dynamic IP assigned; static IP would prevent address changes on stop/start
+✅ **systemd service active** — Auto-start on reboot and crash recovery configured
+
+✅ **Static IP reserved** — Address survives stop/start
+
+⚠ **Ready for LuckPerms setup** — LuckPerms 5.5.53 installed; groups/tracks pending
 
 ⚠ **Friends whitelist** — Standard Minecraft whitelist not yet implemented
 
 ⚠ **Vault for EssentialsX** — Optional economy/permission bridging not yet installed
-
----
-
-## Mods + Plugins, side by side
-
-Youer is a **hybrid** server: it loads **two** ecosystems from two folders.
-
-| Folder | Loaded as | Contents |
-|---|---|---|
-| `mods/`    | NeoForge mods    | The 288 Better MC BMC5 mods (unchanged) |
-| `plugins/` | Bukkit plugins   | The admin/utility plugins below |
-
-### Plugins (`plugins/`)
-
-Mirrored from the [`skytekx2-1122` server](https://github.com/skytekx/skytekx2-1122-server-xmas-backup).
-That server was **Mohist 1.12.2**, so every plugin there was a 1.12.2 jar — useless on 1.21.1.
-Each was therefore **upgraded to the current 1.21.1-compatible build of the same project**:
-
-| Plugin | skytekx (1.12.2) | Here (1.21.1) | Source |
-|---|---|---|---|
-| **EssentialsX** (+ Spawn, AntiBuild, Protect, Chat) | 2.19.7 | **2.22.0** | [GitHub](https://github.com/EssentialsX/Essentials/releases) |
-| **LuckPerms** (Bukkit) | 5.4.151 | **5.5.53** | [Modrinth](https://modrinth.com/plugin/luckperms) |
-| **WorldEdit** (Bukkit) | 6.1.9 | **7.3.9** | [Modrinth](https://modrinth.com/plugin/worldedit) |
-| **Multiverse-Core** | 2.5.0 | **5.7.1** | [Modrinth](https://modrinth.com/plugin/multiverse-core) |
-| **Multiverse-Portals** | 2.5.0 | **5.2.3** | [Modrinth](https://modrinth.com/plugin/multiverse-portals) |
-
-Dependency notes: Multiverse-Portals requires Multiverse-Core (present). EssentialsX
-*soft*-depends on **Vault** for economy / permission-group bridging — install
-[Vault](https://www.spigotmc.org/resources/vault.34315/) if you want that, otherwise EssentialsX
-runs standalone. LuckPerms config auto-migrates on first start; Multiverse 5 is a ground-up
-rewrite, so its config format is **not** compatible with the old 2.5.0 — fresh configs are used.
-
-### Two plugins have **no 1.21.1 build** (and were not blindly copied)
-
-| Plugin | Why it's gone | What to use instead on 1.21.1 |
-|---|---|---|
-| **WorldBorder** (Brettflan) | Abandoned in 2020; no release/fork targets 1.21. | Minecraft's **built-in `/worldborder`** command already covers this (see below). For a *visible* per-world border + land pre-generation, use **[ChunkyBorder](https://modrinth.com/plugin/chunkyborder)** + **[Chunky](https://modrinth.com/plugin/chunky)**. |
-| **SB-Skylands** | Abandoned 2017 (1.12 world-generator API); no 1.21 build exists. Also a *skylands/skyblock* world generator, which doesn't fit this pack's existing full modded overworld. | If you ever want an empty/floating-island world, attach **[VoidGen](https://modrinth.com/plugin/voidgen)** to a Multiverse world: `mv create skyworld normal -g VoidGen`. |
-
-> To add either suggested plugin, drop its jar in `plugins/` and restart. They are intentionally
-> **not** pre-installed.
 
 ---
 
@@ -122,8 +85,6 @@ On Windows: `start.bat` (or `start.ps1`, which supports `-Restart`).
   `commands.yml`, `permissions.yml` and a `youer`/`mohist` config folder — those are **fresh
   defaults** (not carried over from skytekx) and are safe to tweak afterwards.
 
----
-
 ## How players connect
 
 Connect in the Minecraft client (with the matching **Better MC BMC5** pack installed) to:
@@ -134,8 +95,6 @@ YOUR_SUBDOMAIN.duckdns.org
 
 No port needed — the server runs on the default 25565. Everyone must be on the **same pack
 version** to join. (Youer is server-side only; clients still run plain Better MC BMC5 / NeoForge.)
-
----
 
 ## Configuration
 
@@ -152,8 +111,6 @@ leave it on.
 
 > `variables.txt` is now only read by `install_java.sh` (optional Java 21 install). Its old
 > ServerStarterJar / NeoForge-auto-install fields are no longer used by the launch scripts.
-
----
 
 ## Hosting notes
 
@@ -174,8 +131,6 @@ the current IP. A cron job re-asserts it every 5 minutes:
 */5 * * * * ~/duckdns/duck.sh >/dev/null 2>&1
 ```
 The update script leaves `ip=` blank so DuckDNS auto-detects the instance's current public IP.
-
----
 
 ## Mod notes
 
@@ -214,8 +169,6 @@ Resume an interrupted run with `chunky continue`. Set a matching world border af
 ```
 worldborder set 6000
 ```
-
----
 
 ## Backup operations
 
@@ -278,8 +231,5 @@ log "=== Backup abgeschlossen ==="
 
 ## Pending / TODO
 
-- [ ] **Smoke-test the full boot** — the conversion is assembled and statically verified (Youer jar boots to its banner; all plugin jars validated), but a full 288-mod + plugins world-load has not been run end-to-end yet. Watch the first boot for any mod/plugin that misbehaves under the hybrid core.
-- [ ] **`systemd` service** for auto-start on reboot and crash recovery
-- [ ] **Reserved (static) public IP** so the address survives stop/start
-- [ ] Whitelist for the friends group
 - [ ] Set up **LuckPerms** groups/tracks and decide whether to add **Vault** for EssentialsX economy
+- [ ] Whitelist for the friends group
