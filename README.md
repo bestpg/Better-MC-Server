@@ -49,7 +49,7 @@ This repository tracks the whole server.
 
 ⚠ **Ready for LuckPerms setup** — LuckPerms 5.5.53 installed; groups/tracks pending
 
-⚠ **Friends whitelist** — Standard Minecraft whitelist not yet implemented
+✅ **Friends whitelist active** — 4 players whitelisted via standard Minecraft whitelist; `white-list=true` in `server.properties`
 
 ⚠ **Vault for EssentialsX** — Optional economy/permission bridging not yet installed
 
@@ -159,15 +159,16 @@ want to keep back into `mods/`.
   the 1.5.x builds require Minecraft 26.1+ and will not load here.
 
 ### Pre-generating the world
-Run before inviting players (it's CPU-heavy on 2 ARM cores, so do it overnight):
+Run before inviting players (it's CPU-heavy on 2 ARM cores). Radius **3000 blocks** (~142k chunks)
+caused a watchdog timeout crash (~3-4 cps after hitting ungenerated areas). Use a **smaller radius**
+or expect to pause periodically:
 ```
-chunky radius 3000
+chunky radius 1500
 chunky start
 ```
-Resume an interrupted run with `chunky continue`. Set a matching world border afterward with the
-**built-in vanilla command** (the WorldBorder plugin is no longer needed, see above):
+Resume an interrupted run with `chunky continue`. Set a matching world border afterward:
 ```
-worldborder set 6000
+worldborder set 3000
 ```
 
 ## Backup operations
@@ -232,4 +233,3 @@ log "=== Backup abgeschlossen ==="
 ## Pending / TODO
 
 - [ ] Set up **LuckPerms** groups/tracks and decide whether to add **Vault** for EssentialsX economy
-- [ ] Whitelist for the friends group
