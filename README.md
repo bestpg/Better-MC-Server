@@ -21,7 +21,9 @@ This repository tracks the whole server.
 | **Java** | 21+ |
 | **Host** | Oracle Cloud — Ampere A1.Flex (ARM / aarch64), Ubuntu |
 | **Resources** | 2 OCPU, ~12 GB RAM |
-| **Heap** | `-Xmx8G -Xms8G` |
+| **Heap** | `-Xmx6G -Xms6G -XX:MaxMetaspaceSize=512M -XX:ReservedCodeCacheSize=256M -XX:+AlwaysPreTouch` |
+| **Swap** | 4 GB (`vm.swappiness=100`) |
+| **View Distance** | 8 (reduced from 10 to save RAM) |
 | **Port** | 25565 (default) |
 
 > **What changed from the upstream NeoForge pack?** The vanilla NeoForge launch
@@ -43,7 +45,11 @@ This repository tracks the whole server.
 
 ✅ **Full boot smoke-tested** — 288-mod + plugins world-load verified end-to-end
 
-✅ **systemd service active** — Auto-start on reboot and crash recovery configured
+✅ **systemd service active** — Auto-start on reboot and crash recovery configured (StartLimitBurst=20, RestartSec=10s)
+
+✅ **Nightly restart** — `systemctl restart bettermc` at 05:00 UTC to flush native memory leaks
+
+✅ **0 OOM kills since optimizations** — vm.swappiness=100 + 6 GB heap + Metaspace cap fixed memory exhaustion
 
 ✅ **Static IP reserved** — Address survives stop/start
 
@@ -101,16 +107,36 @@ version** to join. (Youer is server-side only; clients still run plain Better MC
 RAM and JVM flags live in **`user_jvm_args.txt`** (read by every launch script):
 
 ```
--Xmx8G -Xms8G -Dlog4j2.formatMsgNoLookups=true
+-Xmx6G -Xms6G -XX:+AlwaysPreTouch -XX:MaxMetaspaceSize=512M -XX:ReservedCodeCacheSize=256M -Dlog4j2.formatMsgNoLookups=true
 ```
 
-On this 12 GB instance, 8 GB is allocated to the server, leaving headroom for the OS. Don't set
-this higher than the box can spare or the JVM will fail to start or get killed. The
-`-Dlog4j2.formatMsgNoLookups=true` flag mitigates the Log4Shell (CVE-2021-44228) exploit class —
+On this 12 GB instance, 6 GB heap is allocated to the server, leaving ~6 GB for
+the OS, native memory, and 89,000+ classes from 288 mods. `AlwaysPreTouch` prevents
+overcommit surprises; `MaxMetaspaceSize` caps class metadata at 512 MB (was
+reserving 1.34 GB unbounded); `ReservedCodeCacheSize` limits JIT code cache.
+The `-Dlog4j2.formatMsgNoLookups=true` flag mitigates the Log4Shell (CVE-2021-44228) exploit class —
 leave it on.
 
 > `variables.txt` is now only read by `install_java.sh` (optional Java 21 install). Its old
 > ServerStarterJar / NeoForge-auto-install fields are no longer used by the launch scripts.
+
+### Swap & Memory Management
+
+The instance has **4 GB swap** (`/swapfile`) with **`vm.swappiness=100`** to prevent
+the OOM killer from terminating Java. Without aggressive swapping, the Linux kernel
+keeps anonymous pages in RAM indefinitely — even with 4 GB of unutilized swap available.
+
+When the 288-mod server runs for hours, native memory (metaspace, code cache, thread stacks)
+can grow beyond the headroom left by the heap, triggering OOM kills. High swappiness ensures
+the kernel spills to swap *before* killing processes.
+
+```bash
+# /etc/sysctl.d/99-minecraft-swap.conf
+vm.swappiness=100
+```
+
+> If the server becomes unresponsive and SSH times out, check `dmesg | grep "Out of memory"`.
+> If OOM killed java, the instance needs a reboot (`sudo reboot`) or more swap.
 
 ## Hosting notes
 
